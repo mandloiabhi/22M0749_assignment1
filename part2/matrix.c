@@ -14,6 +14,7 @@
 #define CODE_START 0x1000
 #define BINARY_FILE1 "guest1.bin"
 #define BINARY_FILE2 "guest2.bin"
+#define CURRENT_TIME ((double)clock() / CLOCKS_PER_SEC)
 
 struct vm
 {

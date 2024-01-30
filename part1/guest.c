@@ -28,6 +28,12 @@ void HC_printStr(char *str)
 	str++;		// Remove this
 }
 
+char *HC_numExitsByType()
+{
+	// Fill in here
+	return NULL;	// Remove this
+}
+
 uint32_t HC_gvaToHva(uint32_t gva)
 {
 	// Fill in here
@@ -61,11 +67,16 @@ _start(void) {
 	HC_print32bit(num_exits_a);
 	HC_print32bit(num_exits_b);
 
+	char *firststr = HC_numExitsByType();
 	uint32_t hva;
 	hva = HC_gvaToHva(1024);
 	HC_print32bit(hva);
 	hva = HC_gvaToHva(4294967295);
 	HC_print32bit(hva);
+	char *secondstr = HC_numExitsByType();
+
+	HC_printStr(firststr);
+	HC_printStr(secondstr);
 	/*------------------------------------------------------------------------*/
 
 	*(long *) 0x400 = 42;
