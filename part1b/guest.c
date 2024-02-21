@@ -1,4 +1,4 @@
- #include <stdio.h>
+ //#include <stdio.h>
 // #include <stdlib.h>
 // #include <unistd.h>
 // #include <fcntl.h>
@@ -60,22 +60,22 @@ void HC_printStr(char *str)
 char *HC_numExitsByType()
 {
 	// Fill in here
-	//return NULL;	// Remove this
-    uint8_t val1=0,val2=0;
-	out32bit(0xE6,val1);
-	out32bit(0xE7,val2);
-	int ioInValue =val1; /* obtain actual IO in value */;
-    int ioOutValue =val2; /* obtain actual IO out value */;
+	return NULL;	// Remove this
+    // uint8_t val1=0,val2=0;
+	// out32bit(0xE6,val1);
+	// out32bit(0xE7,val2);
+	// int ioInValue =val1; /* obtain actual IO in value */;
+    // int ioOutValue =val2; /* obtain actual IO out value */;
 
     // Allocate memory for the result string
-    char* resultString ;  // Adjust the size as needed
+   // char* resultString ;  // Adjust the size as needed
 	
 
 
     // Format the string with IO in and IO out values
-    sprintf(resultString, "IO in: %d\nIO out: %d", ioInValue, ioOutValue);
+    // sprintf(resultString, "IO in: %d\nIO out: %d", ioInValue, ioOutValue);
 
-    return resultString;
+    // return resultString;
 }
 
 uint32_t HC_gvaToHva(uint32_t gva)
