@@ -1,7 +1,7 @@
 all: matrix guest1.bin guest2.bin
 
 matrix:
-	gcc matrix.c -o matrix -lpthread
+	gcc matrix.c -o matrix -lpthread -lrt
 
 guest1.bin: guest1.o
 	ld -m elf_i386 --oformat binary -N -e _start -Ttext 0x10000 -o guest1.bin guest1.o

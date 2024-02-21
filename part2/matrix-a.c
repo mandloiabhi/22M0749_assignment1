@@ -9,51 +9,13 @@
 #define _GNU_SOURCE
 #include <unistd.h>
 
-
-#include <string.h>
-#include <signal.h>
-#include <time.h>
-
-#include <stdint.h>
-#include <signal.h>
-
-#include <errno.h>
-
-
-#define FRAC_A 7
-#define FRAC_B 3
-#define QUANTUM 1
-#define CLOCKID CLOCK_REALTIME
-#define SIG SIGRTMIN
-
-#define TIMER_INTERVAL_SECONDS 1
-#define VM_SIGNAL SIGRTMIN
-
-static volatile int timer_expired = 1;
-
-
-
-
-
 #define KVM_DEVICE "/dev/kvm"
 #define RAM_SIZE 512000000
 #define CODE_START 0x1000
 #define BINARY_FILE1 "guest1.bin"
 #define BINARY_FILE2 "guest2.bin"
 #define CURRENT_TIME ((double)clock() / CLOCKS_PER_SEC)
-#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-                               } while (0)
-
-int turn1=0;
-int turn2=0;
 int turn=0;
-struct timespec start;
-struct timespec end;
-static void handler(int sig, siginfo_t *si, void *uc)
-{
-    // printf("abhijeet");
-    // signal(sig, SIG_IGN);
-}
 struct vm
 {
     int dev_fd;
@@ -247,17 +209,14 @@ void *kvm_cpu_thread(void *data)
     // Copy the code from this function to your code implementation in kvm_run_vm() and modify it accordingly
     struct vm *vm = (struct vm *)data;
     int ret = 0;
-    kvm_reset_vcpu(vm->vcpus);
+    // kvm_reset_vcpu(vm->vcpus);
     // turn=turn+1;
     while (1)
     {
         // turn=turn+1;
         printf("VMFD: %d started running\n", vm->vm_fd);
         ret = ioctl(vm->vcpus->vcpu_fd, KVM_RUN, 0);
-        // printf("%d",ret);
-        clock_gettime(CLOCK_MONOTONIC, &end);
-        double time_elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-        printf("Time: %.6f\n", time_elapsed);
+
         printf("VMFD: %d stopped running - exit reason: %d\n", vm->vm_fd, vm->vcpus->kvm_run->exit_reason);
 
         switch (vm->vcpus->kvm_run->exit_reason)
@@ -279,7 +238,6 @@ void *kvm_cpu_thread(void *data)
             break;
         case KVM_EXIT_INTR:
             printf("VMFD: %d KVM_EXIT_INTR\n", vm->vm_fd);
-            goto exit_kvm;
             break;
         case KVM_EXIT_SHUTDOWN:
             printf("VMFD: %d KVM_EXIT_SHUTDOWN\n", vm->vm_fd);
@@ -306,81 +264,26 @@ exit_kvm:
 
 void kvm_run_vm(struct vm *vm1, struct vm *vm2)
 {
-    
+    // if (pthread_create(&(vm1->vcpus->vcpu_thread), (const pthread_attr_t *)NULL, vm1->vcpus->vcpu_thread_func, vm1) != 0)
+    // {
+    //     perror("can not create kvm thread");
+    //     exit(1);
+    // }
+    // if (pthread_create(&(vm2->vcpus->vcpu_thread), (const pthread_attr_t *)NULL, vm2->vcpus->vcpu_thread_func, vm2) != 0)
+    // {
+    //     perror("can not create kvm thread");
+    //     exit(1);
+    // }
+    // pthread_join(vm1->vcpus->vcpu_thread, NULL);
+    // pthread_join(vm2->vcpus->vcpu_thread, NULL);
 
-    
-    
-    timer_t timerid;
-    sigset_t           mask;
-    long long          freq_nanosecs;
-    struct sigevent    sev;
-    struct sigaction   sa;
-    struct itimerspec  its;
+    // Remove everything in the function above this line and replace it with your code here
 
-    
-    /* Establish handler for timer signal. */
-
-    // printf("Establishing handler for signal %d\n", SIG);
-    sa.sa_flags = SA_SIGINFO;
-    sa.sa_sigaction = handler;
-    sigemptyset(&sa.sa_mask);
-    if (sigaction(SIG, &sa, NULL) == -1)
-        errExit("sigaction");
-
-    /* Block timer signal temporarily. */
-
-    // printf("Blocking signal %d\n", SIG);
-    sigemptyset(&mask);
-    sigaddset(&mask, SIG);
-    if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1)
-        errExit("sigprocmask");
-
-    /* Create the timer. */
-
-    sev.sigev_notify = SIGEV_SIGNAL;
-    sev.sigev_signo = SIG;
-    sev.sigev_value.sival_ptr = &timerid;
-    if (timer_create(CLOCKID, &sev, &timerid) == -1)
-        errExit("timer_create");
-
-    // printf("timer ID is %#jx\n", (uintmax_t) timerid);
-
-    /* Start the timer. */
-
-    // freq_nanosecs = atoll(argv[2]);
-    freq_nanosecs=1000000000;
-    its.it_value.tv_sec = freq_nanosecs / 1000000000;
-    its.it_value.tv_nsec = freq_nanosecs % 1000000000;
-    its.it_interval.tv_sec = its.it_value.tv_sec;
-    its.it_interval.tv_nsec = its.it_value.tv_nsec;
-
-    if (timer_settime(timerid, 0, &its, NULL) == -1)
-        errExit("timer_settime");
-
-    /* Sleep for a while; meanwhile, the timer may expire
-        multiple times. */
-
-    // printf("Sleeping for %d seconds\n", atoi(argv[1]));
-    //sleep(atoi(argv[1]));
-    sleep(1);
-
-    /* Unlock the timer signal, so that timer notification
-        can be delivered. */
-
-    // printf("Unblocking signal %d\n", SIG);
-    if (sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1)
-        errExit("sigprocmask");
-
-    // exit(EXIT_SUCCESS);
-
-
-
-    clock_gettime(CLOCK_MONOTONIC, &start);
-   
+     kvm_reset_vcpu(vm1->vcpus);
+     kvm_reset_vcpu(vm2->vcpus);
      while(1)
      {
-        
-        if(turn<7)
+        if(turn%2==0)
         {
             
             turn=turn+1;
@@ -390,14 +293,8 @@ void kvm_run_vm(struct vm *vm1, struct vm *vm2)
         {
            
            turn=turn+1;
-           
             kvm_cpu_thread(vm2);
         }
-        if(turn==10)
-        {
-            turn=0;
-        }
-        
         // kvm_cpu_thread(vm1);
         // kvm_cpu_thread(vm2);
         

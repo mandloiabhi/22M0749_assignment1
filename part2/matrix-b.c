@@ -20,9 +20,7 @@
 #include <errno.h>
 
 
-#define FRAC_A 7
-#define FRAC_B 3
-#define QUANTUM 1
+
 #define CLOCKID CLOCK_REALTIME
 #define SIG SIGRTMIN
 
@@ -44,8 +42,6 @@ static volatile int timer_expired = 1;
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
                                } while (0)
 
-int turn1=0;
-int turn2=0;
 int turn=0;
 struct timespec start;
 struct timespec end;
@@ -380,7 +376,7 @@ void kvm_run_vm(struct vm *vm1, struct vm *vm2)
      while(1)
      {
         
-        if(turn<7)
+        if(turn%2==0)
         {
             
             turn=turn+1;
@@ -390,12 +386,7 @@ void kvm_run_vm(struct vm *vm1, struct vm *vm2)
         {
            
            turn=turn+1;
-           
             kvm_cpu_thread(vm2);
-        }
-        if(turn==10)
-        {
-            turn=0;
         }
         
         // kvm_cpu_thread(vm1);

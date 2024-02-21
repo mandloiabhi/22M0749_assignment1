@@ -62,7 +62,8 @@
 #define PDE64_DIRTY (1U << 6)
 #define PDE64_PS (1U << 7)
 #define PDE64_G (1U << 8)
-
+int i_o_in=0;
+int i_o_out=0;
 
 struct vm {
 	int dev_fd;
@@ -157,26 +158,83 @@ int run_vm(struct vm *vm, struct vcpu *vcpu, size_t sz)
 {
 	struct kvm_regs regs;
 	uint64_t memval = 0;
+	uint32_t num = 0;
 
 	for (;;) {
 		if (ioctl(vcpu->vcpu_fd, KVM_RUN, 0) < 0) {
 			perror("KVM_RUN");
 			exit(1);
 		}
-
+        num=num+1;
 		switch (vcpu->kvm_run->exit_reason) {
 		case KVM_EXIT_HLT:
 			goto check;
 
 		case KVM_EXIT_IO:
-			if (vcpu->kvm_run->io.direction == KVM_EXIT_IO_OUT
-			    && vcpu->kvm_run->io.port == 0xE9) {
-				char *p = (char *)vcpu->kvm_run;
-				fwrite(p + vcpu->kvm_run->io.data_offset,
+			if (vcpu->kvm_run->io.direction == KVM_EXIT_IO_OUT && vcpu->kvm_run->io.port == 0xE9) {
+				char *ptr = (char *)vcpu->kvm_run;
+				fwrite(ptr + vcpu->kvm_run->io.data_offset,
 				       vcpu->kvm_run->io.size, 1, stdout);
 				fflush(stdout);
+				i_o_out++;
 				continue;
 			}
+			if (vcpu->kvm_run->io.direction == KVM_EXIT_IO_OUT && vcpu->kvm_run->io.port == 0xE8) {
+				char *ptr = (char *)vcpu->kvm_run;
+				uint32_t *val = (uint32_t *)(ptr + vcpu->kvm_run->io.data_offset);
+			    printf("%u\n",*val);
+				i_o_out++;
+				continue;
+			}
+			if (vcpu->kvm_run->io.direction == KVM_EXIT_IO_IN && vcpu->kvm_run->io.port == 0xEA)
+			{
+					char *p = (char *)vcpu->kvm_run;
+					p[vcpu->kvm_run->io.data_offset] = num;
+					i_o_in++;
+					continue;
+			}
+			if(vcpu->kvm_run->io.direction == KVM_EXIT_IO_OUT && vcpu->kvm_run->io.port == 0xEB)
+			{
+				
+				uint32_t memow;
+				char *ptr = (char *)vcpu->kvm_run;
+				memcpy(&memow,ptr + vcpu->kvm_run->io.data_offset,vcpu->kvm_run->io.size);
+				struct kvm_translation trlt;
+				trlt.linear_address = memow;
+				if(ioctl(vcpu->vcpu_fd,KVM_TRANSLATE,&trlt)<0)
+				{
+					perror("Error in translating GVA");
+					exit(1);
+				}
+				// size_t len = 0;
+				// while(vm->mem[trlt.physical_address+len]!=0)
+				// {
+				// 	++len;
+				// }
+				i_o_out++;
+				printf("%s",vm->mem+trlt.physical_address);
+				
+			
+				continue;
+			}
+			if (vcpu->kvm_run->io.direction == KVM_EXIT_IO_OUT && vcpu->kvm_run->io.port == 0xE7) {
+				char *ptr = (char *)vcpu->kvm_run;
+				uint32_t *val = (uint32_t *)(ptr + vcpu->kvm_run->io.data_offset);
+			    // printf("%u\n",*val);
+				// i_o_out++;
+				*val=i_o_out;
+				continue;
+			}
+			if (vcpu->kvm_run->io.direction == KVM_EXIT_IO_OUT && vcpu->kvm_run->io.port == 0xE6) {
+				char *ptr = (char *)vcpu->kvm_run;
+				uint32_t *val = (uint32_t *)(ptr + vcpu->kvm_run->io.data_offset);
+			    // printf("%u\n",*val);
+				// i_o_out++;
+				*val=i_o_in;
+				continue;
+			}
+			
+
 
 			/* fall through */
 		default:
